@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link rel="stylesheet" href="../tools/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/cart.css">
+</head>
+<body>
+  <h1>我是一个购物车页面</h1>
+
+  <div class="container"></div>
+
+  <script src="../js/jquery.min.js"></script>
+  <script>
+    // 调用函数 动态生成页面
+    setPage();
+
+    // 给父级标签添加点击事件 通过事件委托执行程序
+    $('.container').click(e=>{
+      // 先获取 localStorage 中的数据
+      const arr = JSON.parse( localStorage.getItem('cart') );
+
+      // 
+      if( e.target.getAttribute('name') === 'all' ){
+        // name 是 all 点击是 全选按钮
+        // 给所有的 数据库的数据 也就是 localStorage 中的数据
+        // buy属性的属性值 和 全选按钮 checked属性值 相同
+        arr.forEach( item =>{
+          item.buy = e.target.checked;
+        })
+
+      }else if( e.target.getAttribute('name') === 'goods' ){
+        // 找到数组中 和 点击标签 存储的索引下标相同的对象
+        // 修改 其中 buy 属性的属性值 和 点击标签的 checked属性值 相同
+        let index = e.target.getAttribute('index')-0;
+        arr[index].buy = e.target.checked;
+      
+      }else if( e.target.getAttribute('name') === 'del' ){
+        // 找到数组中 和 点击标签 存储的索引下标相同的对象
+        // 从 当前索引下标开始 删除 一个数据单元
+        let index = e.target.getAttribute('index')-0;
+        arr.splice( index , 1 );
+
+      }else if( e.target.getAttribute('name') === '-' ){
+        // 找到数组中 和 点击标签 存储的索引下标相同的对象
+        // 给 存储 购买数量的属性 num 累减 1
+        let index = e.target.getAttribute('index')-0;
+        arr[index].num--;
+
+      }else if( e.target.getAttribute('name') === '+' ){
+        // 找到数组中 和 点击标签 存储的索引下标相同的对象
+        // 给 存储 购买数量的属性 num 累加 1
+        let index = e.target.getAttribute('index')-0;
+        arr[index].num++;
+        
+      }
+
+      // 将新的数组 存储到 localStorage 中
+      localStorage.setItem( 'cart' , JSON.stringify( arr ) );
+      // 根据新的 localStorage 再次动态渲染生成页面
+      setPage();
+    })
+
+
+
+    // 定义一个函数 根据 localStorage 动态生成页面
+    function setPage(){
+      // 1, 获取 localStorage 中 cart 中的数据
+      let cartArr = localStorage.getItem('cart');
+
+      // 如果 localStorage 中 cart 键名获取的结果是 null
+      // 证明没有创建 购物车数据 生成对应的 空内容的页面
+      if( cartArr === null ){
+        $('.container').html('<h2>您还没有购物记录信息,请您先去购物</h2>');
+      
+      // 有购物车数据信息 
+      }else{
+        // 将 json字符串 转化为 对应的数据类型
+        cartArr = JSON.parse( cartArr );
+        // console.log( cartArr );
+        
+        // 如果 cartArr 的 数组长度为 0 证明 有购物车 但是没有 存储数据
+        if( cartArr.length === 0 ){
+          $('.container').html('<h2>您的购物车,目前是空车,赶紧去装满它</h2>');
+
+        // 有购物车 购物车 有数据 动态生成页面内容
+        }else{
+          // 定义变量 存储数据
+          let bool = true;
+          // 购买商品的总种类
+          let type = 0;
+          // 购买商品的总件数
+          let number = 0;
+          // 购买商品的总价格
+          let money = 0;
+
+          // 生成起始内容部分
+          let str = `
+          <div class="panel panel-info ">
+            <div class="panel-body bg-info">
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" name="all">
+                  全选
+                </label>
+              </div>
+            </div>
+            <div class="panel-footer">
+              <ul class="cart-list">
+          `;
+
+          // 中间部分 根据数组循环遍历生成的li
+          cartArr.forEach( (item,key)=>{
+            if(item.buy){
+              // 如果 buy 是 true
+              // 执行 累加操作 累加 购买商品的种类,件数,价钱
+              type++;
+              number += item.num;
+              money += item.goods_price * item.num;
+            }else{
+              // 如果 buy 是 false
+              // 给bool赋值false
+              bool = false;
+            }
+
+            str += `
+              <li class="cart-item">
+                <div class="left">
+                  <input type="checkbox" ${item.buy ? 'checked' : ''} name="goods" index="${key}">
+                </div>
+                <div class="right">
+                  <div class="media">
+                    <div class="media-left">
+                      <a href="#">
+                        <img class="media-object" src="${item.goods_small_logo}" alt="...">
+                      </a>
+                    </div>
+                    <div class="media-body">
+                      <h4 class="media-heading">${item.goods_name}</h4>
+                      <p>
+                        <i class="glyphicon glyphicon-yen"></i>
+                        <span>${item.goods_price}</span>
+                      </p>
+                      <div class="btn-group pull-right" role="group" aria-label="...">
+                        <button type="button" class="btn btn-default" name="-" index="${key}" ${item.num === 1 ? 'disabled' : ''}>-</button>                         
+                        <button type="button" class="btn btn-default" disabled>${item.num}</button>
+                        <button type="button" class="btn btn-default" name="+" index="${key}" ${item.num === item.goods_number-0 ? 'disabled' : ''}>+</button>
+                      </div>
+                      <button class="del btn btn-danger" name="del" index="${key}">我不要了</button>
+
+                    </div>
+                  </div>
+                </div>
+              </li>
+            `;
+          })
+
+
+          // 生成结束内容部分
+          str += `
+              </ul>
+                <h2>您购买了 ${type} 种 一共 ${number} 件商品</h2>
+                <h2>您一共需要支付 ${money.toFixed(2)} 元</h2>
+              </div>
+            </div>
+          `;
+
+          // 将字符串内容写入标签中
+          $('.container').html(str);
+
+          // 根据bool的结果 设定 全选按钮 状态
+          $('[name="all"]').prop('checked' , bool);
+        }
+      }
+
+    }
+  </script>
+
+  <script>
+    /*
+      动态生成购物车内容:
+        1,  localStorage中 的 获取数据内容
+          (1) localStorage 中 没有 购物车 键名
+              也就是 还没有 创建 购物车数据
+
+          (2) localStorage 中 有 购物车键名
+              也就是 已经创建了 购物车
+
+              (2-1) 购物车中 数据是 空 也就是 一个空数组
+
+              (2-2) 购物车中 有具体的数据
+
+        2,  根据 localStorage 中的数据 动态生成页面
+            页面 中的 操作 本质上 是 修改 localStorage 中的数据
+            再根据 新的数据 再次动态渲染 页面 
+
+        3,  动态生成页面
+            (1) 起始部分到 ul的起始标签
+
+            (2) ul中的li标签
+                根据 localStorage 数组 循环遍历生成
+
+            (3) ul结束标签 至 内容的 最后
+
+        4,  数量
+            最多不能超过库存
+            最小不能小于1
+    
+    */
+  </script>
+</body>
+</html>
+
+<!--  
+      
+
+            
+              
+
+
+
+
+-->

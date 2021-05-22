@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link rel="stylesheet" href="../tools/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/login.css">
+  <style>
+      .inputWidth{
+        width: 200px;
+        display: inline-block;
+      }
+
+      .spanspan{
+        color:red;
+        font-size: 20px;
+      }
+      .cover{
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,.5);
+      }
+  </style>
+</head>
+<body>
+
+    <div class="jumbotron">
+      <h1>欢迎注册 NZ2002 SHOP</h1>
+      <div class="login">
+        <div class="form-horizontal">
+          <div class="form-group">
+            <label for="username" class="col-sm-2 control-label">用户名</label>
+            <div class="col-sm-10">
+              <input type="text" name="name" class="form-control inputWidth"  placeholder="用户名">
+              <span name="nameSpan" class="spanspan"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="password" class="col-sm-2 control-label">密码</label>
+            <div class="col-sm-10">
+              <input name="pwd1" type="password" class="form-control inputWidth"  placeholder="密码">
+              <span name="pwd1" class="spanspan"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password" class="col-sm-2 control-label">确认密码</label>
+            <div class="col-sm-10">
+              <input name="pwd2" type="password" class="form-control inputWidth"  placeholder="确认密码">
+              <span class="spanspan"></span>
+              
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password" class="col-sm-2 control-label">验证码</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control inputWidth" id="ac" placeholder="验证码"> <a id="sc"></a><br>
+              <span name="vcSpan" class="spanspan"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button class="btn btn-default">注册</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/tools.js"></script>
+    
+    <script>
+      // 1, 通过调用函数 向 标签写入生成的 验证码
+      $('#sc').html( setVc() ).click( function(){ $(this).html( setVc() ) } );
+
+      // 2, 给 账号标签 添加 失去焦点事件
+      // 失去焦点 判断 输入的 账号能不能使用
+      $('[name="name"]').blur(function(){ 
+        // 触发一个ajax请求 将 input输入框的数据 传参给PHP程序
+        // 验证账号 是否可以使用 也就是 账号是不是重复
+        // 向 goods_select.php 文件传参 
+        // 参数有1个 键名是 userName 
+        // 传参方式是 post 
+        // 响应体是 json字符串
+        $.ajax({
+          url:'../server/goods_select.php',
+          type:'post',
+          data:{ userName: $(this).val() },
+          dataType:'json',
+          success:res=>{
+            // console.log( res );
+            // 根据 响应体结果 向页面写入提示信息
+            $('[name="nameSpan"]').html( res.msg );
+          }
+
+        })
+
+      })
+
+      // 3, 给 注册按钮添加点击事件
+      // 获取数据 验证判断 验证都通过 发送ajax请求
+      // 参数有两个 键名是 userName userPwd
+      // 请求方式是 post 响应体是 json
+      $('button').click(()=>{
+        // 1, 验证判断
+
+        // 两次的密码必须一致 如果不一致 执行return 不执行之后的程序
+        if( $('[name="pwd1"]').val() !== $('[name="pwd2"]').val() ){
+          // 写入提示信息
+          $('[name="pwd1"]').html('密码不同');
+          // 执行return
+          return
+        }else{
+          // 提示信息删除,写入空字符串
+          $('[name="pwd1"]').html('');
+        }
+
+        // 验证码 必须相同 如果不一致 执行 return 不执行之后的程序
+        // 直接比较,是区分大小写,如果需要不区分大小写,可以字符串大小写统一
+        if( $('#ac').val().toLowerCase() !== $('#sc').html().toLowerCase() ){
+          // 写入提示信息
+          $('[name="vcSpan"]').html( '验证码不同' );
+          // 执行 return
+          return
+        }else{
+          // 提示信息是空字符串
+          $('[name="vcSpan"]').html( '' );
+        }
+
+
+
+
+        // 2, 发送ajax请求
+        $.ajax({
+          url:'../server/goods_res.php',
+          type:'post',
+          data:{ userName:$('[name="name"]').val() , userPwd: $('[name="pwd1"]').val() },
+          dataType:'json',
+          success:res=>{
+            // 重新写入验证码
+            $('#sc').html( setVc() );
+            // 根据结果输出提示信息
+            if( res.result === 1 ){
+              window.alert('您注册成功,点击确定,跳转登录页面');
+              window.location.href = './login.html';
+            }else{
+              window.alert('账号重复,请您重新输入账号注册');
+            }
+          }
+        })
+      })
+    </script>
+
+
+</body>
+</html>

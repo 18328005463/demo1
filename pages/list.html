@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- 设定 meta标签 可以加载网络图片 -->
+  <meta name="referrer" content="never">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link rel="stylesheet" href="../tools/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/list.css">
+  <link rel="stylesheet" href="../tools/jquery-pagination/pagination.css">
+  <style>
+    .breadcrumb{
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+
+    /* 可以自己手动修改 标签样式  只要 优先级 够就行 */
+    .m-style{
+      width: 700px;
+      margin: 50px auto;
+
+    }
+
+    .m-style a{
+      border:2px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>我是一个列表页面</h1>
+
+  <div class="pagi"></div>
+
+  <!-- 为了方便观察 将 分页器插件内容 设定的 具体页面内容之上 -->
+  <div class="box m-style"></div>
+
+  <div class="container">
+    <ul></ul>
+  </div>
+
+  <script src="../../../jquery.min.js"></script>
+  <script src="../tools/jquery-pagination/jquery.pagination.js"></script>
+  <script src="../../../tools.js"></script>
+  <script>
+    // 获取数据信息
+    // 1, 第一次请求 默认显示第一页内容
+    let page = 1;
+    // 2, 根据实际项目设定 每页显示的数据数量
+    let line = 8;
+    // 3, 获取一级分类的关键词
+    const urlObj = myGetUrlVal();
+
+    // 4, 调用函数 动态渲染生成页面
+    setPage( page , line , urlObj.cat_one_id );
+
+
+    // 定义一个函数 发起请求获取数据信息
+    // 发起请求的关键数据
+    // 参数1:当前页 参数2:每页数据数量 参数3:一级分类名称
+    function setPage( page , line , cat_one_id ){
+      // 发起ajax请求
+      $.ajax({
+        url:'../server/goods_list.php',
+        data:{ page:page, line:line, cat_one_id:cat_one_id  },
+        dataType:'json',
+        type:'get',
+        success:function(res){
+          console.log(res);
+          // 根据 res 中的 内容 动态生成页面
+          // 动态生成的是ul中的li标签内容
+
+          // 定义变量储存内容
+          let str = '';
+
+          // 循环遍历数组 动态生成 li标签内容
+          // item 就是 储存数据的 具体的对象
+          res.data.forEach(function(item){
+            str += `
+              <li class="list-item">
+                <div class="panel panel-primary">
+                  <div class="panel-body">
+                    <ol class="breadcrumb">
+                      <li><a href="#">${item.cat_one_id}</a></li>
+                      <li><a href="#">${item.cat_two_id}</a></li>
+                      <li class="active">${item.cat_three_id}</li>
+                    </ol>
+                  </div>
+                  <div class="panel-footer">
+                    <div class="row">
+                      <div class="">
+                        <div class="thumbnail">
+                          <img src="${item.goods_big_logo}" alt="...">
+                          <div class="caption">
+                            <h3>${item.goods_name}</h3>
+                            <p>
+                              <i class="glyphicon glyphicon-yen"></i>
+                              <span>${item.goods_price}</span>
+                            </p>
+                            <p>
+                              <a href="javascript:;" class="btn btn-primary" role="button">查找相似商品</a>
+                              <a href="./detail.html?goods_id=${item.goods_id}" class="btn btn-danger" role="button">查看商品详情</a></p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            
+            `;
+          })
+        
+          // 将内容写入到 标签对象中
+          $('.container > ul').html(str);
+          
+          // 根据 响应体res 内容 设定配置 分页器插件
+          // 以 对象形式 设定 配置参数
+          $('.box').pagination({
+            pageCount:res.sumPage ,     // 总页数
+            totalData:res.rows ,        // 数据总数量
+            current: page ,             // 当前第几页
+            showData: page,             // 每页显示数据数量
+            prevContent: '上一页',      //  上一页按钮显示内容    
+            nextContent: '下一页',      //  下一页按钮显示内容 
+            count: 4,                   //   显示的分页按钮的数量 不包括当前选中的按钮
+            mode: 'fixed',              // 固定分页显示,页数按钮的数量  
+            coping: true,               // 是否开启首页末页
+            homePage:'首页',            // 首页文本内容
+            endPage:'末页',             // 末页文本内容
+            isHide: true,               // 总页数为0或者1 隐藏 分页控件
+            jump:true,                  // 开启跳转功能
+            callback:function(val){     // 回调函数 形参储存数据
+              // 形参.getCurrent() 获取当前页
+              // console.log( val.getCurrent() )
+              // 将 也要去 第几页 的信息 设定给 page变量
+              // page = val.getCurrent();
+              // 执行新的函数 发起新的请求 动态生成新的页面
+              setPage( val.getCurrent() , line , urlObj.cat_one_id );
+            }
+          }); 
+        }
+      })
+    }
+
+
+
+
+  </script>
+
+  <script>
+    /*
+      1,  获取浏览器地址栏中 携带的参数数据 
+          根据数据 向后端程序发起 请求 获取 一级分类对应的商品信息
+    
+          发送请求的方式和关键数据
+            1,  方式: get
+            2,  参数:
+              (1) cat_one_id 
+                一级分类名称
+              (2) page
+                当前显示第几页的内容
+                默认是 第一页
+              (3) line  
+                每页显示的数据数量
+
+          返回的响应体结果
+            data: (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+              存储 返回数据对象
+            line: "8"
+              每页数据的数据
+            page: "1"
+              当前是第几页
+            row: "40"
+              一共的数据数量,也就是当前一级分类数据一共是40条
+            sumPage: 5
+              总页数是 5页
+
+          显示 网络图片 
+            <!-- 设定 meta标签 可以加载网络图片 -->
+            <meta name="referrer" content="never">
+
+      2,  通过插件 实现分页显示
+          jquery-pagination 是 一个 分页显示插件
+          使用说明网站
+
+          (1) 导入 jQuery文件 和 分页器插件文件
+              先导入 jQuery文件
+
+          (2) 设定 标签对象 准备写入分页器插件内容
+
+      3,  点击 查看商品详情 跳转 商品详情页
+          同时 传参 商品详情信息 也就是 商品 goods_id 
+
+    */
+
+
+  </script>
+</body>
+</html>
+
+
+<!--  
+
+
+
+
+
+-->

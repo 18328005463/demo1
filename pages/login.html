@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link rel="stylesheet" href="../tools/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/login.css">
+</head>
+<body>
+    <div class="jumbotron">
+      <h1>欢迎光临 NZ2002 SHOP</h1>
+      <div class="login">
+        <form class="form-horizontal">
+          <div class="form-group">
+            <label for="username" class="col-sm-2 control-label">用户名</label>
+            <div class="col-sm-10">
+              <input name="name" type="text" class="form-control" id="username" placeholder="用户名">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="password" class="col-sm-2 control-label">密码</label>
+            <div class="col-sm-10">
+              <input name="pwd" type="password" class="form-control" id="password" placeholder="密码">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button type="submit" class="btn btn-default">登录</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="../js/jquery.min.js"></script>
+    <script src="../js/cookie.js"></script>
+
+    <script>
+      // 给 form标签添加 submit 事件 要阻止默认事件的执行
+      $('form').submit(()=>{
+        // 发送ajax 请求
+        $.ajax({
+          url:'../server/goods_login.php',
+          type:'post',
+          data:{userName: $('[name="name"]').val() , userPwd:$('[name="pwd"]').val()},
+          dataType:'json',
+          success:res=>{
+            if( res.result === 1 ){
+              // 登录成功 
+              
+              // 谁定cookie 
+              mySetCookie( 'login' , 1 , 7*24*60*60 , '/' );
+
+              // 方法1 登录成功执行 后退操作 
+              // window.alert('您登录成功,点击确定,执行后退操作');
+              // window.history.back();
+
+              // 方法2
+              // 通过 window.location.search 获取浏览器地址栏数据信息
+              // 如果没有传参 结果是 空字符串
+              let search = window.location.search.substr(5);
+              
+              window.alert('恭喜您,跳转成功,哪儿来的回哪儿去');
+              window.location.href = search;
+              
+            }else{
+              // 弹出提示信息
+              window.alert('对不起 登录失败');
+            }
+          }
+        })
+
+        // 阻止默认事件执行
+        return false;
+      })
+
+    </script>
+</body>
+</html>
+
+
